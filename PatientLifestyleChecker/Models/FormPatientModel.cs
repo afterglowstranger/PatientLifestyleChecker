@@ -20,7 +20,7 @@ namespace LifeStyleChecker.Models
         [Required]
         [DisplayName("last name")]
         public string LastName { get; set; } = string.Empty;
-        //public string Name => LastName.ToUpper() + ", " + CapitalizeFirstLetter(FirstName);
+        
         [Required]
         public DateOnly Born { get; set; }
 

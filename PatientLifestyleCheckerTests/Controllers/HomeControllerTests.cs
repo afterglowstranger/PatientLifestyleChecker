@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http;
@@ -63,162 +64,106 @@ namespace LifeStyleCheckerTests.Controllers
             Assert.Equal(model, viewResult.Model);
         }
 
-        //[Fact]
-        //public async Task PatientSearch_ValidModel_EligiblePatientFound_RedirectsToSurveyIndex()
-        //{
-        //    // Arrange
-        //    var model = new FormPatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        FirstName = "John",
-        //        LastName = "Doe",
-        //        Born = new DateOnly(1990, 01, 01)
-        //    };
+        
 
-        //    var patient = new PatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        Name = "DOE, John",
-        //        Born = new DateTime(1990, 01, 01)
-        //    };
 
-        //    var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        //    mockHttpMessageHandler
-        //        .Setup(handler => handler.Send(It.IsAny<HttpRequestMessage>()))
-        //        .Returns(new HttpResponseMessage
-        //        {
-        //            StatusCode = HttpStatusCode.OK,
-        //            Content = new StringContent(JsonConvert.SerializeObject(patient))
-        //        });
+        [Fact]
+        public void GetViewBasedOnParameters_EligiblePatientFound_ReturnsRedirectToSurveyIndex()
+        {
+            // Arrange
+            var model = new FormPatientModel
+            {
+                NhsNumber = 123456789,
+                FirstName = "John",
+                LastName = "Doe",
+                Born = new DateOnly(1990, 01, 01)
+            };
 
-        //    var client = new HttpClient(mockHttpMessageHandler.Object);
-        //    _controller.Client = client;
+            // Act
+            var result = _controller.GetViewBasedOnParameters(SearchOutcomes.EligiblePatientFound, model);
 
-        //    // Act
-        //    var result = await _controller.PatientSearch(model);
+            // Assert
+            var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectToActionResult.ActionName);
+            Assert.Equal("Survey", redirectToActionResult.ControllerName);
+            Assert.Equal(model.GetPatientAge(), redirectToActionResult.RouteValues["patientAge"]);
+        }
 
-        //    // Assert
-        //    var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
-        //    Assert.Equal("Index", redirectToActionResult.ActionName);
-        //    Assert.Equal("Survey", redirectToActionResult.ControllerName);
-        //    Assert.Equal(model.GetPatientAge(), redirectToActionResult.RouteValues["patientAge"]);
-        //}
+        [Fact]
+        public void GetViewBasedOnParameters_UnderAge_ReturnsIndexViewWithError()
+        {
+            // Arrange
+            var model = new FormPatientModel
+            {
+                NhsNumber = 123456789,
+                FirstName = "John",
+                LastName = "Doe",
+                Born = new DateOnly(DateTime.Now.Year - 10, 01, 01)
+            };
 
-        //[Fact]
-        //public async Task PatientSearch_ValidModel_UnderAge_ReturnsIndexViewWithError()
-        //{
-        //    // Arrange
-        //    var model = new FormPatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        FirstName = "John",
-        //        LastName = "Doe",
-        //        Born = new DateOnly(DateTime.Now.Year - 10, 01, 01)
-        //    };
+            // Act
+            var result = _controller.GetViewBasedOnParameters(SearchOutcomes.UnderAge, model);
 
-        //    var patient = new PatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        Name = "DOE, John",
-        //        Born = new DateTime(DateTime.Now.Year - 10, 01, 01)
-        //    };
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Index", viewResult.ViewName);
+            Assert.Equal(model, viewResult.Model);
+            Assert.True(_controller.ModelState.ContainsKey("NhsNumber"));
+            var modelStateEntry = _controller.ModelState["NhsNumber"];
+            Assert.NotNull(modelStateEntry);
+            Assert.Contains(modelStateEntry.Errors, e => e.ErrorMessage == "You are not eligible for this service, thank you for your interest");
+        }
 
-        //    var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        //    mockHttpMessageHandler
-        //        .Setup(handler => handler.Send(It.IsAny<HttpRequestMessage>()))
-        //        .Returns(new HttpResponseMessage
-        //        {
-        //            StatusCode = HttpStatusCode.OK,
-        //            Content = new StringContent(JsonConvert.SerializeObject(patient))
-        //        });
+        [Fact]
+        public void GetViewBasedOnParameters_DetailsNotMatched_ReturnsIndexViewWithError()
+        {
+            // Arrange
+            var model = new FormPatientModel
+            {
+                NhsNumber = 123456789,
+                FirstName = "John",
+                LastName = "Doe",
+                Born = new DateOnly(1990, 01, 01)
+            };
 
-        //    var client = new HttpClient(mockHttpMessageHandler.Object);
-        //    _controller.Client = client;
+            // Act
+            var result = _controller.GetViewBasedOnParameters(SearchOutcomes.DetailsNotMatched, model);
 
-        //    // Act
-        //    var result = await _controller.PatientSearch(model);
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Index", viewResult.ViewName);
+            Assert.Equal(model, viewResult.Model);
+            Assert.True(_controller.ModelState.ContainsKey("NhsNumber"));
+            var modelStateEntry = _controller.ModelState["NhsNumber"];
+            Assert.NotNull(modelStateEntry);
+            Assert.Contains(modelStateEntry.Errors, e => e.ErrorMessage == "Your details could not be found");
+        }
 
-        //    // Assert
-        //    var viewResult = Assert.IsType<ViewResult>(result);
-        //    Assert.Equal("Index", viewResult.ViewName);
-        //    Assert.Equal(model, viewResult.Model);
-        //    Assert.True(_controller.ModelState.ContainsKey("NhsNumber"));
-        //}
+        [Fact]
+        public void GetViewBasedOnParameters_NotFound_ReturnsIndexView()
+        {
+            // Arrange
+            var model = new FormPatientModel
+            {
+                NhsNumber = 123456789,
+                FirstName = "John",
+                LastName = "Doe",
+                Born = new DateOnly(1990, 01, 01)
+            };
 
-        //[Fact]
-        //public async Task PatientSearch_ValidModel_DetailsNotMatched_ReturnsIndexViewWithError()
-        //{
-        //    // Arrange
-        //    var model = new FormPatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        FirstName = "John",
-        //        LastName = "Doe",
-        //        Born = new DateOnly(1990, 01, 01)
-        //    };
+            // Act
+            var result = _controller.GetViewBasedOnParameters(SearchOutcomes.NotFound, model);
 
-        //    var patient = new PatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        Name = "DOE, Jane",
-        //        Born = new DateTime(1990, 01, 01)
-        //    };
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Index", viewResult.ViewName);
+            Assert.Equal(model, viewResult.Model);
+            var modelStateEntry = _controller.ModelState["NhsNumber"];
+            Assert.NotNull(modelStateEntry);
+            Assert.Contains(modelStateEntry.Errors, e => e.ErrorMessage == "Your details could not be found");
+        }
 
-        //    var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        //    mockHttpMessageHandler
-        //        .Setup(handler => handler.Send(It.IsAny<HttpRequestMessage>()))
-        //        .Returns(new HttpResponseMessage
-        //        {
-        //            StatusCode = HttpStatusCode.OK,
-        //            Content = new StringContent(JsonConvert.SerializeObject(patient))
-        //        });
+       
 
-        //    var client = new HttpClient(mockHttpMessageHandler.Object);
-        //    _controller.Client = client;
-
-        //    // Act
-        //    var result = await _controller.PatientSearch(model);
-
-        //    // Assert
-        //    var viewResult = Assert.IsType<ViewResult>(result);
-        //    Assert.Equal("Index", viewResult.ViewName);
-        //    Assert.Equal(model, viewResult.Model);
-        //    Assert.True(_controller.ModelState.ContainsKey("NhsNumber"));
-        //}
-
-        //[Fact]
-        //public async Task PatientSearch_ValidModel_NotFound_ReturnsIndexViewWithError()
-        //{
-        //    // Arrange
-        //    var model = new FormPatientModel
-        //    {
-        //        NhsNumber = 123456789,
-        //        FirstName = "John",
-        //        LastName = "Doe",
-        //        Born = new DateOnly(1990, 01, 01)
-        //    };
-
-        //    var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        //    mockHttpMessageHandler
-        //        .Setup(handler => handler.Send(It.IsAny<HttpRequestMessage>()))
-        //        .Returns(new HttpResponseMessage
-        //        {
-        //            StatusCode = HttpStatusCode.NotFound
-        //        });
-
-        //    var client = new HttpClient(mockHttpMessageHandler.Object);
-        //    _controller.Client = client;
-
-        //    // Act
-        //    var result = await _controller.PatientSearch(model);
-
-        //    // Assert
-        //    var viewResult = Assert.IsType<ViewResult>(result);
-        //    Assert.Equal("Index", viewResult.ViewName);
-        //    Assert.Equal(model, viewResult.Model);
-        //    Assert.True(_controller.ModelState.ContainsKey("NhsNumber"));
-        //}
-
-      
     }
 }

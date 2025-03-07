@@ -18,7 +18,67 @@ namespace PatientLifestyleCheckerTest.Controllers
                 _controller = new SurveyController(_mockService.Object);
             }
 
-            [Fact]
+        [Fact]
+        public async Task Index_SurveyWithQuestions_ReturnsSurveyView()
+        {
+            // Arrange
+            var survey = new Survey
+            {
+                Questions = new List<LifestyleQuestion>
+                {
+                    new LifestyleQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Question = "Do you exercise regularly?",
+                        ScoreAffirmative = true,
+                        QuestionOrder = 1,
+                        QuestionScores = new List<QuestionScore>
+                        {
+                            new QuestionScore { LowerBound = 16, UpperBound = 21, Score = 1 },
+                            new QuestionScore { LowerBound = 22, UpperBound = 40, Score = 2 },
+                            new QuestionScore { LowerBound = 41, UpperBound = 64, Score = 3 },
+                            new QuestionScore { LowerBound = 65, Score = 3 }
+                        }
+                    }
+                },
+                Outcomes = new List<SurveyOutcome>()
+            };
+
+            _mockService.Setup(service => service.GetSurvey()).ReturnsAsync(survey);
+
+            // Act
+            var result = _controller.Index(25);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<Survey>(viewResult.Model);
+            Assert.Equal(25, model.PatientAge);
+            Assert.Single(model.Questions);
+        }
+
+        [Fact]
+        public async Task Index_SurveyWithoutQuestions_ReturnsOutcomePageWithError()
+        {
+            // Arrange
+            var survey = new Survey
+            {
+                Questions = new List<LifestyleQuestion>(),
+                Outcomes = new List<SurveyOutcome>()
+            };
+
+            _mockService.Setup(service => service.GetSurvey()).ReturnsAsync(survey);
+
+            // Act
+            var result = _controller.Index(25);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("OutcomePage", viewResult.ViewName);
+            var model = Assert.IsType<SurveyOutcome>(viewResult.Model);
+            Assert.Equal("Error: Unable to load Survey with at least one question, please contact support", model.Outcome);
+        }
+
+        [Fact]
             public async Task SubmitSurvey_ValidSurvey_ReturnsOutcomePage()
             {
                 // Arrange

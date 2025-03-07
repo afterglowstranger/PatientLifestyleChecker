@@ -16,7 +16,7 @@ namespace LifeStyleChecker.Services
         {
          
             Survey survey = new Survey();
-
+                        
             //survey.Id = Guid.NewGuid();
 
             //survey.Questions.Add(new LifestyleQuestion
@@ -82,7 +82,8 @@ namespace LifeStyleChecker.Services
             //await JsonSerializer.SerializeAsync(createStream, survey);
 
             string text = File.ReadAllText("wwwroot/Data/survey.json");
-            survey = JsonSerializer.Deserialize<Survey>(text);
+            survey = JsonSerializer.Deserialize<Survey>(text) ?? new Survey();
+            
 
             return survey;
         }

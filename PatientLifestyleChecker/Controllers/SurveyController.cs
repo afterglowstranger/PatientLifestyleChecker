@@ -19,6 +19,12 @@ namespace LifeStyleChecker.Controllers
         {
             
             var survey = _lifeStyleSurveyService.GetSurvey().Result;
+            if (!survey.Questions.Any()) {
+
+                SurveyOutcome outcome = new SurveyOutcome();
+                outcome.Outcome = "Error: Unable to load Survey with at least one question, please contact support";
+                return View("OutcomePage", outcome);
+            }
             survey.PatientAge = patientAge;
             return View(survey);
         }
