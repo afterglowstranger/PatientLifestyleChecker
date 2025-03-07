@@ -2,3 +2,4 @@ obj/
 bin/
 .vs/
 /appsettings.Development.json
+/PatientLifestyleChecker/appsettings.Development.json
