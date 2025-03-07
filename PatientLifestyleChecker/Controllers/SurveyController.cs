@@ -27,25 +27,49 @@ namespace LifeStyleChecker.Controllers
         public async Task<IActionResult> SubmitSurvey( Survey surveyResponse)
         {
             var survey = await _lifeStyleSurveyService.GetSurvey();
+            var patientScore = GetPatientScore(survey, surveyResponse).Result;
 
-            int PatientScore = 0;
+            var derivedOutcome = GetOutcomeFromScore(survey, patientScore);
 
-            foreach(var answer in surveyResponse.Questions)
+            return View("OutcomePage", derivedOutcome);
+        }
+
+        public async Task<int> GetPatientScore(Survey survey,Survey surveyResponse)
+        {
+            int patientScore = 0;
+
+            foreach (var answer in surveyResponse.Questions)
             {
+                //We only want to count the score if the answer is affirmative(true) and the ScoreAffirmative is true or if the answer is negative(false) and the ScoreAffirmative is false
                 var answerScores = survey.Questions.Where(a => a.Id == answer.Id && answer.AffirmativeResponse == a.ScoreAffirmative).SingleOrDefault();
 
                 if (answerScores != null)
                 {
-                    var answerScore = answerScores.QuestionScores.Where(a => a.LowerBound <= surveyResponse.PatientAge &&  surveyResponse.PatientAge <= a.UpperBound ).SingleOrDefault().Score;
-                    PatientScore += answerScore;
+                    var answerScore = answerScores.QuestionScores.Where(a => a.LowerBound <= surveyResponse.PatientAge && surveyResponse.PatientAge <= a.UpperBound).SingleOrDefault()?.Score;
+                    //Guards incase the Patients age doesn't have a score band associated with it
+                    if (answerScore.HasValue)
+                    {
+                        patientScore += answerScore.Value;
+                    }
                 }
-
             }
-
-            var derivedOutcome = survey.Outcomes.Where(s => (s.LowerBound <= PatientScore && PatientScore <= s.UpperBound) || (s.LowerBound is null && PatientScore <= s.UpperBound) || (s.LowerBound <= PatientScore && s.UpperBound is null)).SingleOrDefault();
-
-
-            return View("OutcomePage", derivedOutcome);
+ 
+            return patientScore; ;
         }
+
+        public SurveyOutcome? GetOutcomeFromScore(Survey survey, int PatientScore)
+        {
+            //Once we have the Patients Score we check for the outcome where
+            //the score is between a lower and upper mark or above a lower mark
+            //where no upper mark and vice versa
+
+            var derivedOutcome = survey.Outcomes
+                .Where(s => (s.LowerBound <= PatientScore && PatientScore <= s.UpperBound)
+                            || (s.LowerBound is null && PatientScore <= s.UpperBound)
+                            || (s.LowerBound <= PatientScore && s.UpperBound is null))
+                .SingleOrDefault();
+            return derivedOutcome;
+        }
+
     }
 }

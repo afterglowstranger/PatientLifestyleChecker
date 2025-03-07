@@ -26,7 +26,7 @@ namespace LifeStyleChecker.Models
 
         public string ErrorMessage { get; set; }= string.Empty;
 
-        internal string Name() => LastName.ToUpper() + ", " + CapitalizeFirstLetter(FirstName);
+        public string Name() => LastName.ToUpper() + ", " + CapitalizeFirstLetter(FirstName);
 
         public int GetPatientAge()
         {
@@ -46,7 +46,7 @@ namespace LifeStyleChecker.Models
             return s.Remove(1).ToUpper() + s.Substring(1);
         }
 
-        internal bool IsFormPatientValid(PatientModel model)
+        public bool IsFormPatientValid(PatientModel model)
         {
             return this.NhsNumber == model.NhsNumber && 
                 this.Name() == model.Name && 
@@ -55,14 +55,14 @@ namespace LifeStyleChecker.Models
                 this.Born.Year == model.Born.Year;
         }
 
-        internal bool IsFormPatientNHSIdValid(PatientModel model)
+        public bool IsFormPatientNHSIdValid(PatientModel model)
         {
             return this.NhsNumber == model.NhsNumber; 
         }
 
 
 
-        internal SearchOutcomes EvaluateSearchResponse(PatientModel model)
+        public SearchOutcomes EvaluateSearchResponse(PatientModel model)
         {
             if(this.IsFormPatientValid(model))
             {
