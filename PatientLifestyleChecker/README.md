@@ -20,6 +20,8 @@ I have made the assumption that as this survey is not secured behind any sort of
 
 ##Features
 
+The API key will need to be added to a appsettings.Development.json file whick can be copied from the appsettings.Example.json provided.
+
 I have provided a solution that takes all it's Survey knowledge from a single json file, allowing the survey to be changed without rebuilding or deploying code.  The questions, the age banding for scoring and the scores themselves are all manageable.  The outcome thresholds and messages are also managed in the same file.  It also means additional yes/no questions can be added without changing the code.  At present the question type is limited to yes no answers but this could be developed futher if required.
 
 ##Future Enhancements
