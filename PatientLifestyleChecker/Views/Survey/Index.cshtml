@@ -10,37 +10,6 @@
 <hr />
 <div class="row">
     <div class="col-md-12">
-        @* <form asp-action="SubmitSurvey" > *@
-        @*  <form asp-controller="Survey" asp-action="SubmitSurvey" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" />
-                <span asp-validation-for="Id" class="text-danger"></span>
-            </div>
-            <table class="twoColFormTable">
-                @foreach(var question in Model.Questions){
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => question.Question)
-                        </td>
-                        <td>
-
-                            @* Yes: @Html.RadioButton(question.AffirmativeResponse,true) *@
-        @*  Yes: @Html.RadioButton(question.Id.ToString(),question.AffirmativeResponse, true, new { @Name="@(question.Id)"})
-
-                            <br/>
-                            No: @Html.RadioButton(question.Id.ToString(), question.AffirmativeResponse, false, new { @Name = "@(question.Id)" })
-                        </td>
-
-                    </tr>
-                }
-            </table>
-            <div class="form-group">
-                <input type="submit" value="Submit Survey" class="btn btn-primary" />
-            </div>
-        </form> *@
-
         @using (Html.BeginForm("SubmitSurvey", "Survey",FormMethod.Post))
         {
             @Html.ValidationSummary(true)
